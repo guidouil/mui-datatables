@@ -8,6 +8,8 @@ import FormGroup from '@material-ui/core/FormGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import InputLabel from '@material-ui/core/InputLabel';
 import Input from '@material-ui/core/Input';
+import Radio from '@material-ui/core/Radio';
+import RadioGroup from '@material-ui/core/RadioGroup';
 import MenuItem from '@material-ui/core/MenuItem';
 import Select from '@material-ui/core/Select';
 import Checkbox from '@material-ui/core/Checkbox';
@@ -143,6 +145,13 @@ class TableFilter extends React.Component {
     this.props.onFilterUpdate(index, event.target.value, 'textField');
   };
 
+  handleDatePickerChange = (event, index) => {
+    this.props.onFilterUpdate(index, event.target.value, 'datePicker');
+  };
+  handleDatePickerOperatorChange = (event, index) => {
+    this.props.onFilterUpdate(index, event.target.value, 'datePickerOperator');
+  };
+
   renderCheckbox(column, index) {
     const { classes, filterData, filterList } = this.props;
 
@@ -268,6 +277,52 @@ class TableFilter extends React.Component {
     );
   }
 
+  renderDatepicker(column, index) {
+    const { classes, filterList } = this.props;
+
+    return (
+      <GridListTile key={index} cols={2}>
+        <div className={classes.textFieldRoot}>
+          <FormControl component="fieldset">
+            <RadioGroup
+              row
+              aria-label={column.name}
+              name="operator"
+              className={classes.group}
+              onChange={event => this.handleDatePickerOperatorChange(event, index)}>
+              <FormControlLabel
+                value="<"
+                control={<Radio checked={filterList[index] && filterList[index][0] === '<'} />}
+                label="&lt;"
+              />
+              <FormControlLabel
+                value="="
+                control={<Radio checked={filterList[index] && filterList[index][0] === '='} />}
+                label="="
+              />
+              <FormControlLabel
+                value=">"
+                control={<Radio checked={filterList[index] && filterList[index][0] === '>'} />}
+                label="&gt;"
+              />
+            </RadioGroup>
+          </FormControl>
+          <FormControl className={classes.textFieldFormControl}>
+            <TextField
+              label={column.name}
+              value={(filterList[index][1] && filterList[index][1].toString()) || ''}
+              type="date"
+              onChange={event => this.handleDatePickerChange(event, index)}
+              InputLabelProps={{
+                shrink: true,
+              }}
+            />
+          </FormControl>
+        </div>
+      </GridListTile>
+    );
+  }
+
   render() {
     const { classes, columns, options, onFilterReset } = this.props;
     const textLabels = options.textLabels.filter;
@@ -304,6 +359,8 @@ class TableFilter extends React.Component {
                 ? this.renderMultiselect(column, index)
                 : filterType === 'textField'
                 ? this.renderTextField(column, index)
+                : filterType === 'datePicker'
+                ? this.renderDatepicker(column, index)
                 : this.renderSelect(column, index);
             }
           })}

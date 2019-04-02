@@ -80,7 +80,7 @@ class MUIDataTable extends React.Component {
             viewColumns: PropTypes.bool,
             filterList: PropTypes.array,
             filterOptions: PropTypes.array,
-            filterType: PropTypes.oneOf(['dropdown', 'checkbox', 'multiselect', 'textField']),
+            filterType: PropTypes.oneOf(['dropdown', 'checkbox', 'multiselect', 'textField', 'datePicker']),
             customHeadRender: PropTypes.func,
             customBodyRender: PropTypes.func,
           }),
@@ -483,7 +483,31 @@ class MUIDataTable extends React.Component {
       if (filterVal.length) {
         if (filterType === 'textField' && !this.hasSearchText(columnVal, filterVal, caseSensitive)) {
           isFiltered = true;
-        } else if (filterType !== 'textField' && filterVal.indexOf(columnValue) < 0) {
+        } else if (filterType === 'datePicker') {
+          if (filterVal.length == 2) {
+            const operator = filterVal[0];
+            const searchedDate = new Date(filterVal[1].split('-')); // date input format is YYYY-MM-DD
+            const columnDate = new Date(columnVal.split('/').reverse()); // french local format is DD/MM/YYYY
+            switch (operator) {
+              case '>': // greater
+                if (searchedDate < columnDate) {
+                  isFiltered = true;
+                }
+                break;
+              case '<': // lower
+                if (searchedDate > columnDate) {
+                  isFiltered = true;
+                }
+                break;
+              default:
+                // equal
+                if (columnDate.toLocaleDateString() !== searchedDate.toLocaleDateString()) {
+                  isFiltered = true;
+                }
+                break;
+            }
+          }
+        } else if (filterType !== 'textField' && filterType !== 'datePicker' && filterVal.indexOf(columnValue) < 0) {
           isFiltered = true;
         }
       }
@@ -579,7 +603,6 @@ class MUIDataTable extends React.Component {
 
   getDisplayData(columns, data, filterList, searchText) {
     let newRows = [];
-
     for (let index = 0; index < data.length; index++) {
       const value = data[index].data;
       const displayRow = this.computeDisplayRow(columns, value, index, filterList, searchText);
@@ -753,13 +776,33 @@ class MUIDataTable extends React.Component {
       prevState => {
         const filterList = cloneDeep(prevState.filterList);
         const filterPos = filterList[index].indexOf(column);
-
         switch (type) {
           case 'checkbox':
             filterPos >= 0 ? filterList[index].splice(filterPos, 1) : filterList[index].push(column);
             break;
           case 'multiselect':
             filterList[index] = column === '' ? [] : column;
+            break;
+          case 'datePicker':
+            if (column === '') {
+              filterList[index] = [];
+            } else {
+              const dateFilter = filterList[index] || [];
+              if (!dateFilter[0]) {
+                dateFilter[0] = '='; // default is equal
+              }
+              dateFilter[1] = column;
+              filterList[index] = dateFilter;
+            }
+            break;
+          case 'datePickerOperator':
+            if (column === '') {
+              filterList[index] = [];
+            } else {
+              const dateFilter = filterList[index] || [];
+              dateFilter[0] = column;
+              filterList[index] = dateFilter;
+            }
             break;
           default:
             filterList[index] = filterPos >= 0 || column === '' ? [] : [column];
