@@ -490,12 +490,12 @@ class MUIDataTable extends React.Component {
             const columnDate = new Date(columnVal.split('/').reverse()); // french local format is DD/MM/YYYY
             switch (operator) {
               case '>': // greater
-                if (searchedDate < columnDate) {
+                if (columnDate < searchedDate) {
                   isFiltered = true;
                 }
                 break;
               case '<': // lower
-                if (searchedDate > columnDate) {
+                if (columnDate > searchedDate) {
                   isFiltered = true;
                 }
                 break;
